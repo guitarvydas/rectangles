@@ -29,12 +29,21 @@ function expand (text) {
 
 var setup;
 
-function noChange (a,b,c,d,e,f,g,h) {
-    return `${a.dot ()}${b.dot ()}${c.dot ()}${d.dot ()}${e.dot ()}${f.dot ()}${g.dot ()}${h.dot ()}`;
+// token = { type:..., text:..., position:...} (all fields are strings)
+
+function Token (ty, text, line, offset) {
+    this.type = ty;
+    this.text = text;
+    this.line = line;
+    this.offset = offset;
+    toString = function () {
+	return `[${this.type} ${this.text} ${this.line} ${this.offset}]`;
+    }
 }
 
-function formatToken (kind,text,line,offset) {
-    return `[${kind} ${encodeURIComponent(text)} ${line} ${offset}]\n`;
+function Position (line, offset) {
+    this.line = line;
+    this.offset = offset;
 }
 
 function addSem (sem) {
@@ -42,31 +51,50 @@ function addSem (sem) {
 	"dot",
 	{
 	    program  : function (_1) {  //(dottedIdent | anyToken)+
-		var textArray = _1.dot ();
-		return textArray.join (''); },
+		var tokenArray = _1.dot ();
+		return tokenArray; },
 	    dottedIdent  : function (_1, _2, _3) {
 		//ident dot ident 
 		// x.y --> y(x,V) --> (prolog) insert = y(x,V_x_y), usage = V_x_y
 		var x = _1.dot ();
 		var y = _3.dot ();
-		console.log(x);
-		console.log(y);
-		var insertedCode = formatToken ("generated", `${y}(${x},V_${x}_${y}),`, x.pos);
-		console.log (insertedCode);
-		var text = `V_${x}_${y}`;
-		console.log (text);
-		return `${insertedCode}${text}`;
+		console.log(x.toString ());
+		console.log(y.toString ());
+		var newTokenArray = [
+		    // y(x,V_x_y)
+		    new Token ("generated", y.text, x.line, x.offset),
+		    new Token ("generated", "(", x.line, x.offset),
+		    new Token ("generated", x.text, x.line, x.offset),
+		    new Token ("generated", ",", x.line, x.offset),
+		    new Token ("generated", x.text, x.line, x.offset),
+		    new Token ("generated", ",", x.line, x.offset),
+		    new Token ("generated", "V_", x.line, x.offset),
+		    new Token ("generated", x.text, x.line, x.offset),
+		    new Token ("generated", "_", x.line, x.offset),
+		    new Token ("generated", y.text, x.line, x.offset),
+		    new Token ("generated", ")", x.line, x.offset)
+		    ,
+		    // V_x_y
+		    new Token ("generated", "V_", x.line, x.offset),
+		    new Token ("generated", x.text, x.line, x.offset),
+		    new Token ("generated", "_", x.line, x.offset),
+		    new Token ("generated", y.text, x.line, x.offset)
+		];
+		return newTokenArray;
 	    },
 
 	    // tokens return {insert, text}
 	    dot  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //     "[" "character"     ws* "."  ws* position "]" ws*
-		return noChange (_1, _2, _3, _4, _5, _6, _7, _8) },
+		var pos = _6.dot ();
+		return [new Token ("character", ".", pos.line, pos.offset)];},
 	    ident  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //   "[" "symbol"  ws* text ws* position "]" ws*
-		return noChange (_1, _2, _3, _4, _5, _6, _7, _8) },
+		var pos = _6.dot ();
+		return [new Token ("character", ".", pos.line, pos.offset)];},
 	    anyToken  : function (_1, _2, _3, _4, _5, _6, _7, _8) { //"[" tokenType ws* text ws* position "]" ws*
-		return noChange (_1, _2, _3, _4, _5, _6, _7, _8) },
+		var pos = _6.dot ();
+		return [new Token ("character", ".", pos.line, pos.offset)];},
 
-	    position  : function (_1s, _2, _3s, _4) { return `${_2.dot ()} ${_4.dot ()}`; }, //ws* int ws+ int
+	    position  : function (_1s, _2, _3s, _4) { return new Position (_2.dot (), _4.dot ()); }, //ws* int ws+ int
 	    text  : function (_1s) { return _1s.dot ().join(''); }, //encodedChar+
 	    encodedChar  : function (_1) { return _1.dot (); }, //~ws ("A" .. "Z" | "a" .. "z" | "0" .. "9" | "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")" | "%")
 	    int  : function (_1s) { return _1s.dot ().join (''); }, //digitChar+
