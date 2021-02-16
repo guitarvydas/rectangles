@@ -30,8 +30,7 @@ function expand (text) {
 function main () {
     var text = getJSON("test.txt");
     var parsed = expand (text);
-    //return parsed;
-    console.log("OK");
+    return parsed;
 }
 
 
@@ -54,5 +53,6 @@ function getJSON (fname) {
 
 
 var result = main ();
-console.log(result);
+console.log("OK");
+//console.log(result);
 
