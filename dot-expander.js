@@ -20,7 +20,7 @@ function expand (text) {
     var parser = ohm.grammar (grammar);
     var result = parser.match (text);
     if (result.succeeded ()) {
-        return result;
+        return { parser: parser, cst: result };
     } else {
         console.log (parser.trace (text).toString ());
         throw "Ohm matching failed";
@@ -33,31 +33,38 @@ function noChange (a,b,c,d,e,f,g,h) {
     return `${a.dot ()}${b.dot ()}${c.dot ()}${d.dot ()}${e.dot ()}${f.dot ()}${g.dot ()}${h.dot ()}`;
 }
 
-function Token (kind,text,protoToken) {
-    var pos = getPosition (protoToken);
-    return `[${kind} ${encodeURIComponent(text)} ${pos}]`;
+function formatToken (kind,text,line,offset) {
+    return `[${kind} ${encodeURIComponent(text)} ${line} ${offset}]\n`;
 }
 
 function addSem (sem) {
-    sem.addSemantics (
+    sem.addOperation (
 	"dot",
 	{
-	    program  : function (_1) { 
-		setup = "";
-		return `${setup} ${_1.dot ()}`; }, //(dottedIdent | anyToken)+
+	    program  : function (_1) {  //(dottedIdent | anyToken)+
+		var textArray = _1.dot ();
+		return textArray.join (''); },
 	    dottedIdent  : function (_1, _2, _3) {
 		//ident dot ident 
-		// x.y --> y(x,V) --> setup = y(x,V_x_y), usage = V_x_y
+		// x.y --> y(x,V) --> (prolog) insert = y(x,V_x_y), usage = V_x_y
 		var x = _1.dot ();
 		var y = _3.dot ();
-		setup += new Token ("generated", `${y}(${x},V_${x}_${y}),`, x);
-		return `V_${x}_${y}`;
+		console.log(x);
+		console.log(y);
+		var insertedCode = formatToken ("generated", `${y}(${x},V_${x}_${y}),`, x.pos);
+		console.log (insertedCode);
+		var text = `V_${x}_${y}`;
+		console.log (text);
+		return `${insertedCode}${text}`;
 	    },
 
-	    // tokens
-	    dot  : function (_1, _2, _3, _4, _5, _6, _7, _8) { return noChange (_1, _2, _3, _4, _5, _6, _7, _8); }, //     "[" "character"     ws* "."  ws* position "]" ws*
-	    ident  : function (_1, _2, _3, _4, _5, _6, _7, _8) { return noChange (_1, _2, _3, _4, _5, _6, _7, _8); }, //   "[" "symbol"  ws* text ws* position "]" ws*
-	    anyToken  : function (_1, _2, _3, _4, _5, _6, _7, _8) { return noChange (_1, _2, _3, _4, _5, _6, _7, _8); }, //"[" tokenType ws* text ws* position "]" ws*
+	    // tokens return {insert, text}
+	    dot  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //     "[" "character"     ws* "."  ws* position "]" ws*
+		return noChange (_1, _2, _3, _4, _5, _6, _7, _8) },
+	    ident  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //   "[" "symbol"  ws* text ws* position "]" ws*
+		return noChange (_1, _2, _3, _4, _5, _6, _7, _8) },
+	    anyToken  : function (_1, _2, _3, _4, _5, _6, _7, _8) { //"[" tokenType ws* text ws* position "]" ws*
+		return noChange (_1, _2, _3, _4, _5, _6, _7, _8) },
 
 	    position  : function (_1s, _2, _3s, _4) { return `${_2.dot ()} ${_4.dot ()}`; }, //ws* int ws+ int
 	    text  : function (_1s) { return _1s.dot ().join(''); }, //encodedChar+
@@ -73,8 +80,14 @@ function addSem (sem) {
 
 function main () {
     var text = getJSON("test.txt");
-    var parsed = expand (text);
-    return parsed;
+    const { parser, cst } = expand (text);
+    if (cst.succeeded) {
+	var semantics = parser.createSemantics ();
+	addSem (semantics);
+	return { cst: cst, semantics: semantics };
+    } else {
+	throw "didn't parse";
+    }
 }
 
 
@@ -96,8 +109,10 @@ function getJSON (fname) {
 }
 
 
-var result = main ();
+var { cst, semantics } = main ();
+var result = semantics (cst).dot ();
 console.log("OK");
+console.log(result);
 //console.log(result);
 
 
