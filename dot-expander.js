@@ -53,8 +53,14 @@ function addSem (sem) {
 	    program  : function (_1) {  //(dottedIdent | anyToken)+
 		var tokenArray = _1.dot ();
 		return tokenArray; },
-	    dottedIdent  : function (_1, _2, _3) {
-		//ident dot ident 
+	    dottedIdent  : function (_1, _2, _3) { //ident dot ident 
+		console.log ("dottedIdent");
+		console.log (_1.toString ());
+		console.log (_2.toString ());
+		console.log (_3.toString ());
+		console.log (_1.dot ().toString ());
+		console.log (_2.dot ().toString ());
+		console.log (_3.dot ().toString ());
 		// x.y --> y(x,V) --> (prolog) insert = y(x,V_x_y), usage = V_x_y
 		var x = _1.dot ();
 		var y = _3.dot ();
@@ -86,13 +92,22 @@ function addSem (sem) {
 	    // tokens return {insert, text}
 	    dot  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //     "[" "character"     ws* "."  ws* position "]" ws*
 		var pos = _6.dot ();
-		return [new Token ("character", ".", pos.line, pos.offset)];},
+		var t = new Token ("character", ".", pos.line, pos.offset);
+		console.log ("dot");
+		console.log (t);
+		return [t];},
 	    ident  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //   "[" "symbol"  ws* text ws* position "]" ws*
 		var pos = _6.dot ();
-		return [new Token ("character", ".", pos.line, pos.offset)];},
+		var t = new Token ("symbol", _4.dot (), pos.line, pos.offset);
+		console.log ("ident");
+		console.log (t);
+		return [t];},
 	    anyToken  : function (_1, _2, _3, _4, _5, _6, _7, _8) { //"[" tokenType ws* text ws* position "]" ws*
 		var pos = _6.dot ();
-		return [new Token ("character", ".", pos.line, pos.offset)];},
+		var t = new Token (_2.dot (), _4.dot (), pos.line, pos.offset);
+		console.log ("anyToken");
+		console.log (t);
+		return [t];},
 
 	    position  : function (_1s, _2, _3s, _4) { return new Position (_2.dot (), _4.dot ()); }, //ws* int ws+ int
 	    text  : function (_1s) { return _1s.dot ().join(''); }, //encodedChar+
