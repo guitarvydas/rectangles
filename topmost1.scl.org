@@ -1,0 +1,19 @@
+* src
+  topmost(L1,L2,L) :-
+      horizontal(L1),
+      horizontal(L2),
+      L1.x =< L2.x.
+* meta
+** need
+** transpile
+   prime-expander.bash
+   node dot-expander
+* comment
+  %% should expand to..
+  topmost(L1,L2,L) :-
+      horizontal(L1),
+      horizontal(L2),
+      x(L1,L1_x),
+      x(L2,L2_x),
+      L1_x =< L2_x.
+  

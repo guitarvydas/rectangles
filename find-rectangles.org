@@ -1,0 +1,8 @@
+* kind
+  find-rectangles
+* inputs 
+** facts
+   line x1 y1 x2 y2
+* outputs 
+** facts
+   rect x y width height

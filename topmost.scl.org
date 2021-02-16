@@ -1,0 +1,7 @@
+* src
+  topmost(L1,L2,L3,L4,L) :-
+      topmost(L1,L2,L'),
+      topmost(L',L3,L''),
+      topmost(L'',L4,L).
+* transpile
+  prime-expander.bash

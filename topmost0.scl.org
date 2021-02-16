@@ -1,0 +1,18 @@
+* src
+  topmost(L1,L2,L3,L4,L) :-
+      topmost(L1,L2,L'),
+      topmost(L',L3,L''),
+      topmost(L'',L4,L).
+* meta
+** name
+  topmost.pl
+** include
+   topmost1.scl.org
+** transpile
+   prime-expander.bash
+* comment   
+  %% should expand to...
+  topmost(L1,L2,L3,L4,L) :-
+      topmost(L1,L2,L_prime),
+      topmost(L_prime,L3,L_prime_prime),
+      topmost(L_prime_prime,L4,L).

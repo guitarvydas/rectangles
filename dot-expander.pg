@@ -1,0 +1,20 @@
+dot_expander {
+  program = (dottedIdent | anyToken)+
+  dottedident = ident dot ident
+
+  dot = "[" "character" "." position "]" ws*
+  ident = "[" "symbol" text position "]" ws*
+  
+  position = "[" line ":" offset "]"
+  line = number
+  offset = number
+  number = "[" "integer" text "[" Int ":" Int "]"
+
+  text = encodedChar+ ws*
+  encodedChar = ~ws ("A" .. "Z" | "a" .. "z" | "0" .. "9" | "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")" | "%")
+  int = digitChar+
+  digitChar = "0" .. "9" 
+  anyToken = "[" tokenType text position "]" ws*
+  tokenType = encodedChar+
+  ws = " " | "\\t"
+}

@@ -1,0 +1,43 @@
+* types:
+ ID
+ 
+* input: line x1 y1 x2 y2
+
+* output: rect x y width height
+* match rules:
+** rectangle {
+*** match
+     forall line (L) {
+       line (L') where joined (L, L') {
+          line (L'') where joined (L', L'') {
+       	     line (L''') where joined (L'', L''') {
+              }
+          }    
+       } 
+***  } calculate {
+        TopLine = topmost (L, L', L'', L''')
+        LeftLine = leftmost (L, L', L'', L''')
+        Width = abs (TopLine.x2 - TopLine.x1)
+        Height = abs (LeftLine.y2 - LeftLine.y1)
+        x = min (TopLine.x1, TopLine.x2)
+        y = min (LeftLine.y1, LeftLine.y2)
+***  } emit {
+	rect (new R)
+	x (R x)
+	y (R y)
+	width (R Width)
+	height (R Height)	     	   
+}
+
+* main
+ rectangle
+
+* external functions
+** joined (L, L') >> SucceedFail
+** topmost (L, L', L'', L''') >> ID
+** leftmost (L, L', L'', L''') >> ID
+* transpiler
+  matcher-to-prolog
+* build
+  | strip-org | transpiler-matcher-to-prolog >temp.pl |
+  swipl <temp.pl -g 
