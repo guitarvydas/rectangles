@@ -50,14 +50,14 @@ function addSem (sem) {
     sem.addOperation (
 	"dot",
 	{
-	    program  : function (_1) {  //(dottedIdent | anyToken)+
-		var tokenArrayOfArrays = _1.dot ();
-		return tokenArrayOfArrays.flat (); },
+	    program  : function (_1s) {  //(dottedIdent | anyToken)+
+		var result = _1s.dot();
+		return result; },  // result is an Array of {preamble:..., tokens:...}
 	    dottedIdent  : function (_1, _2, _3) { //ident dot ident 
 		// x.y --> y(x,V) --> (prolog) insert = y(x,V_x_y), usage = V_x_y
-		var x = (_1.dot ())[0];
-		var y = (_3.dot ())[0];
-		var newTokenArray = [
+		var x = (_1.dot ()).tokens;
+		var y = (_3.dot ()).tokens;
+		var preambleTokenArray = [
 		    // y(x,V_x_y)
 		    new Token ("generated", y.text, x.line, x.offset),
 		    new Token ("generated", "(", x.line, x.offset),
@@ -68,29 +68,30 @@ function addSem (sem) {
 		    new Token ("generated", "_", x.line, x.offset),
 		    new Token ("generated", y.text, x.line, x.offset),
 		    new Token ("generated", ")", x.line, x.offset)
-		    ,
+		];
+		var tokenArray = [
 		    // V_x_y
 		    new Token ("generated", "V_", x.line, x.offset),
 		    new Token ("generated", x.text, x.line, x.offset),
 		    new Token ("generated", "_", x.line, x.offset),
 		    new Token ("generated", y.text, x.line, x.offset)
 		];
-		return newTokenArray;
+		return { preamble: preambleTokenArray, tokens: tokenArray };
 	    },
 
 	    // tokens return {insert, text}
 	    dot  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //     "[" "character"     ws* "."  ws* position "]" ws*
 		var pos = _6.dot ();
 		var t = new Token ("character", ".", pos.line, pos.offset);
-		return [t];},
+		return {preamble: [], tokens: [t]}},
 	    ident  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //   "[" "symbol"  ws* text ws* position "]" ws*
 		var pos = _6.dot ();
 		var t = new Token ("symbol", _4.dot (), pos.line, pos.offset);
-		return [t];},
+		return {preamble: [], tokens: [t]}},
 	    anyToken  : function (_1, _2, _3, _4, _5, _6, _7, _8) { //"[" tokenType ws* text ws* position "]" ws*
 		var pos = _6.dot ();
 		var t = new Token (_2.dot (), _4.dot (), pos.line, pos.offset);
-		return [t];},
+		return {preamble: [], tokens: [t]}},
 
 	    position  : function (_1s, _2, _3s, _4) { return new Position (_2.dot (), _4.dot ()); }, //ws* int ws+ int
 	    text  : function (_1s) { return _1s.dot ().join(''); }, //encodedChar+
@@ -134,11 +135,31 @@ function getJSON (fname) {
     return (JSON.parse (s));
 }
 
+function tokenArrayToString (a) {
+    var sArray = a.map (x => { return a.toString (); });
+    var s = sArray.join ('');
+    return s;
+}
+
+function stringArrayToString (sa) {
+    var s = sa.join ('\n');
+    return s;
+}
 
 var { cst, semantics } = main ("-");
-var tokenArray = semantics (cst).dot ();
-var str = (tokenArray.map ((t) => {return t.toString ();})).join ('\n');
-console.log (str);
+var resultArray /*[{ preamble[], tokens[] }]*/ = semantics (cst).dot ();
+console.log ("OK");
+//console.log (resultArray);
+var preamble = stringArrayToString (resultArray.map (x => { return tokenArrayToString (x.preamble); }));
+var tokens =   stringArrayToString (resultArray.map (x => { return tokenArrayToString (x.tokens);   }));
+console.log ("*** preamble ***");
+console.log (preamble);
+console.log ("*** tokens ***");
+console.log (tokens);
+
+//var str = (tokenArray.map ((t) => {return t.toString ();})).join ('\n');
+//console.log (str);
+
 
 
 
