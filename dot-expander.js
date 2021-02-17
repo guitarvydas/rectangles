@@ -63,8 +63,6 @@ function addSem (sem) {
 		    new Token ("generated", "(", x.line, x.offset),
 		    new Token ("generated", x.text, x.line, x.offset),
 		    new Token ("generated", ",", x.line, x.offset),
-		    new Token ("generated", x.text, x.line, x.offset),
-		    new Token ("generated", ",", x.line, x.offset),
 		    new Token ("generated", "V_", x.line, x.offset),
 		    new Token ("generated", x.text, x.line, x.offset),
 		    new Token ("generated", "_", x.line, x.offset),
