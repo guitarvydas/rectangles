@@ -9,11 +9,22 @@
    prime-expander.bash
    node dot-expander
 * comment
-  %% should expand to..
+  %% should expand, in 2 steps, to..
+
+  %% pragma preamble clear
   topmost(L1,L2,L) :-
+      %% pragma preamble insert
       horizontal(L1),
       horizontal(L2),
+      L1.x =< L2.x.
+  
+  %% pragma preamble clear
+  topmost(L1,L2,L) :-
+      %% pragma preamble insert
       x(L1,L1_x),
       x(L2,L2_x),
+      horizontal(L1),
+      horizontal(L2),
       L1_x =< L2_x.
+  
   
