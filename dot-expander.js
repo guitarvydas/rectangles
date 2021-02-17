@@ -37,7 +37,6 @@ function Token (ty, text, line, offset) {
     this.line = line;
     this.offset = offset;
     toString = function () {
-	console.log ("Token.toString");
 	return `[${this.ty} ${this.text} ${this.line} ${this.offset}]`;
     }
 }
@@ -52,8 +51,8 @@ function addSem (sem) {
 	"dot",
 	{
 	    program  : function (_1) {  //(dottedIdent | anyToken)+
-		var tokenArray = _1.dot ();
-		return tokenArray; },
+		var tokenArrayOfArrays = _1.dot ();
+		return tokenArrayOfArrays; },
 	    dottedIdent  : function (_1, _2, _3) { //ident dot ident 
 		// x.y --> y(x,V) --> (prolog) insert = y(x,V_x_y), usage = V_x_y
 		var x = (_1.dot ())[0];
