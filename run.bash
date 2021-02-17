@@ -1,3 +1,3 @@
 #!/bin/bash
 #node dot-expander <test.txt
-node dot-expander
+node dot-expander <testTokens.txt | ../untoken/untoken.bash

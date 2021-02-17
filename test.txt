@@ -1,5 +1,0 @@
-[symbol L2  4 14]
-[character . 4 14]
-[symbol x  4 15]
-[character . 4 15]
-[character %0A 5 1]

@@ -36,7 +36,7 @@ function Token (ty, text, line, offset) {
     this.text = text;
     this.line = line;
     this.offset = offset;
-    toString = function () {
+    this.toString = function () {
 	return `[${this.ty} ${this.text} ${this.line} ${this.offset}]`;
     }
 }
@@ -52,7 +52,7 @@ function addSem (sem) {
 	{
 	    program  : function (_1) {  //(dottedIdent | anyToken)+
 		var tokenArrayOfArrays = _1.dot ();
-		return tokenArrayOfArrays; },
+		return tokenArrayOfArrays.flat (); },
 	    dottedIdent  : function (_1, _2, _3) { //ident dot ident 
 		// x.y --> y(x,V) --> (prolog) insert = y(x,V_x_y), usage = V_x_y
 		var x = (_1.dot ())[0];
@@ -106,8 +106,8 @@ function addSem (sem) {
     );
 }
 
-function main () {
-    var text = getJSON("test.txt");
+function main (fname) {
+    var text = getJSON(fname);
     const { parser, cst } = expand (text);
     if (cst.succeeded) {
 	var semantics = parser.createSemantics ();
@@ -137,10 +137,10 @@ function getJSON (fname) {
 }
 
 
-var { cst, semantics } = main ();
-var result = semantics (cst).dot ();
-console.log("OK");
-console.log(result);
-//console.log(result);
+var { cst, semantics } = main ("-");
+var tokenArray = semantics (cst).dot ();
+var str = (tokenArray.map ((t) => {return t.toString ();})).join ('\n');
+console.log (str);
+
 
 
