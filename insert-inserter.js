@@ -1,6 +1,6 @@
 const grammar = `
 PROLOG {
-  Rule = Head ":-" body endRule
+  Rule =   Head ":-" body endRule
   Head = ident ParameterList*
   body = bodyItem+
   bodyItem =   (~"." any) -- common
@@ -8,8 +8,9 @@ PROLOG {
   ident = letter alnum*
   ParameterList = "(" (~")" any)+ ")"
   endRule = "." space | "." end
-}
-`;
+  comment = "%" (~"\\n" any)* "\\n"
+  space += comment
+}`;
 
 // Rule = %% pragma preamble clear\n${_1}${_2}%% pragma preamble insert\n${_3}${_4}` %% Head ":-" body endRule
 // Head = _0 %% ident ParameterList*
@@ -91,6 +92,6 @@ function tokenArrayToStringArray (a) {
 }
 
 
-var { cst, semantics } = main ("test.pl");
+var { cst, semantics } = main ("-");
 var resultString = semantics (cst).insert ();
 console.log (resultString);
