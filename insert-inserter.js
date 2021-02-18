@@ -41,9 +41,9 @@ function addSem (sem) {
 	    rule: function (_01, _1, _2, _3, _4) { //Head ":-" body endRule
 		return `
 ${_01.insert ()}
-%% pragma preamble clear
+%% pragma preamble clear %%
 ${_1.insert ()}${_2.insert ()}
-%% pragma preamble insert
+%% pragma preamble insert %%
 ${_3.insert ()}${_4.insert ()}`;
 	    },
 	    head: function (_1, _2) {return `${_1.insert ()}${_2.insert ()}`; }, //ident ParameterList*

@@ -1,2 +1,2 @@
 #!/bin/bash
-sed -e '/%% pragma/d'
+sed -e 's/%% pragma preamble clear %%//g' -e 's/%% pragma preamble insert %%//g'
