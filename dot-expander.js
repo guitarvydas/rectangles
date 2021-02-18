@@ -1,7 +1,9 @@
 const grammar = `
 dot_expander {
   program = rule+
-  rule = (dottedIdent | (~dot anyToken)) dot ws*
+  rule = head colonDash body dot
+  head = dottedIdent | (~dot anyToken)
+  body = dottedIdent | (~dot anyToken)
   colonDash = colon dash
   dottedIdent = ident dot ident
   colon =    "[" "character"     ws* ":"  ws* position "]" ws*
