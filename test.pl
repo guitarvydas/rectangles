@@ -7,6 +7,7 @@
 % comment 3
 
 % comment 4
+% comment 4a
   topmost(L3.x,L) :-
 % comment 5
       horizontal(L3),
