@@ -1,9 +1,14 @@
 #!/bin/bash
 node ./insert-inserter <test.pl |\
     node ../tokens/tokenizer |\
-    node ./dot-expander |\
     ../untoken/untoken.bash |\
     ./pragma-remover.bash
+
+# node ./insert-inserter <test.pl |\
+#     node ../tokens/tokenizer |\
+#     node ./dot-expander |\
+#     ../untoken/untoken.bash |\
+#     ./pragma-remover.bash
 
 ## currently, dot-expander outputs code ("ref") to stdout and outputs preamble to stderr
 # ../untoken/untoken.bash <_preamble.tokens
