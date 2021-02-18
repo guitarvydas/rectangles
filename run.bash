@@ -1,5 +1,5 @@
 #!/bin/bash
-node insert-inserter <test.pl |\
+node ./insert-inserter <test.pl |\
     node ../tokens/tokenizer |\
     node ./dot-expander |\
     ../untoken/untoken.bash |\

@@ -40,18 +40,14 @@ function addSem (sem) {
 	{
 	    rule: function (_01, _1, _2, _3, _4) { //Head ":-" body endRule
 		return `
-${_01.insert ()}
-%% pragma preamble clear %%
-${_1.insert ()}${_2.insert ()}
-%% pragma preamble insert %%
-${_3.insert ()}${_4.insert ()}`;
+${_01.insert ()}%% pragma preamble clear %%${_1.insert ()}${_2.insert ()}%% pragma preamble insert %%${_3.insert ()}${_4.insert ()}`;
 	    },
 	    head: function (_1, _2) {return `${_1.insert ()}${_2.insert ()}`; }, //ident ParameterList*
 	    body: function (_1s) {return `${_1s.insert ().join ('')}`;}, //bodyItem+
 	    bodyItem_common: function (_1) {return `${_1.insert ()}`;}, //  (~"." any) -- common
             bodyItem_dotInSymbol: function (_1,_2) {return `${_1.insert ()}`;}, // | ("." &alnum) -- dotInSymbol
 	    ident: function (_1, _2s, _3) {return `${_1.insert ()}${_2s.insert ().join ('')}${_3.insert ()}`;}, //letter alnum*
-	    parameterList: function (_1, _2, _3s, _4, _5) {return `${_1.insert ()}${_2.insert ()}${_3s.insert ().join ('')}${_4.insert ()}${_5.insert ()}}`;}, //"(" (~")" any)+ ")"
+	    parameterList: function (_1, _2, _3s, _4, _5) {return `${_1.insert ()}${_2.insert ()}${_3s.insert ().join ('')}${_4.insert ()}${_5.insert ()}`;}, //"(" (~")" any)+ ")"
 	    endRule: function (_1, _2, _3) {return `${_1.insert ()}${_2.insert ()}`;},
 	    comment: function (_1, _2s, _3) { return `${_1.insert ()}${_2s.insert ().join ('')}${_3.insert ()}`; },
 	    whitespace: function (_1) { return _1.insert (); },
