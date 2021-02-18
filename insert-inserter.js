@@ -1,21 +1,17 @@
 const grammar = `
-dot_expander {
-  program = (dottedIdent | anyToken)+
-  dottedIdent = ident dot ident
-  dot =      "[" "character"     ws* "."  ws* position "]" ws*
-  ident =    "[" "symbol"  ws* text ws* position "]" ws*
-  anyToken = "[" tokenType ws* text ws* position "]" ws*
-  position = ws* int ws+ int
-  text = encodedChar+
-  encodedChar = ~ws ("A" .. "Z" | "a" .. "z" | "0" .. "9" | "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")" | "%")
-  int = digitChar+
-  digitChar = "0" .. "9" 
-  tokenType = encodedChar+
-  ws = " " | "\\n" | "\\t"
+PROLOG {
+  Rule = Head ":-" body endRule
+  Head = ident ParameterList*
+  body = bodyItem+
+  bodyItem =   (~"." any) -- common
+             | ("." &alnum) -- dotInSymbol
+  ident = letter alnum*
+  ParameterList = "(" (~")" any)+ ")"
+  endRule = "." space | "." end
 }
 `;
 
-function expand (text) {
+function inserter (text) {
     var ohm = require ('ohm-js');
     var parser = ohm.grammar (grammar);
     var result = parser.match (text);
@@ -26,6 +22,8 @@ function expand (text) {
         throw "Ohm matching failed";
     }
 }
+
+var setup;
 
 // token = { type:..., text:..., position:...} (all fields are strings)
 
@@ -43,6 +41,8 @@ function Position (line, offset) {
     this.line = line;
     this.offset = offset;
 }
+
+var preambles;
 
 function addSem (sem) {
     sem.addOperation (

@@ -7,7 +7,8 @@
 ** need
 ** transpile
    prime-expander.bash
-   node dot-expander
+   node insert-inserter  # step 1
+   node dot-expander     # step 2
 * comment
   %% should expand, in 2 steps, to..
 
