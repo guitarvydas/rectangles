@@ -20,7 +20,7 @@ PROLOG {
 // ParameterList = _0 %% "(" (~")" any)+ ")"
 // endRule = _0 %% "." space | "." end
 
-function inserter (text) {
+function insert (text) {
     var ohm = require ('ohm-js');
     var parser = ohm.grammar (grammar);
     var result = parser.match (text);
@@ -39,15 +39,15 @@ function addSem (sem) {
 	    Rule: function (_1, _2, _3, _4) { //Head ":-" body endRule
 		return `
 %% pragma preamble clear
-${_1}${_2}
-%%  %% pragma preamble insert
-${_3}${_4}`;
+${_1.insert ()}${_2.insert ()}
+%% pragma preamble insert
+${_3.insert ()}${_4.insert ()}`;
 	    },
 	    Head: function (_1, _2) {return `${_1.insert ()}${_2.insert ()}`; }, //ident ParameterList*
-	    body: function (_1) {return `${_1.insert ()}`;}, //bodyItem+
+	    body: function (_1s) {return `${_1s.insert ().join ('')}`;}, //bodyItem+
 	    bodyItem_common: function (_1) {return `${_1.insert ()}`;}, //  (~"." any) -- common
             bodyItem_dotInSymbol: function (_1,_2) {return `${_1.insert ()}`;}, // | ("." &alnum) -- dotInSymbol
-	    ident: function (_1, _2) {return `${_1.insert ()}${_2.insert ()}`;}, //letter alnum*
+	    ident: function (_1, _2s) {return `${_1.insert ()}${_2s.insert ().join ('')}`;}, //letter alnum*
 	    ParameterList: function (_1, _2s, _3) {return `${_1.insert ()}${_2s.insert ().join ('')}${_3.insert ()}`;}, //"(" (~")" any)+ ")"
 	    endRule: function (_1, _2) {return `${_1.insert ()}${_2.insert ()}`;}, //"." space | "." end
 	    _terminal: function () { return this.primitiveValue; }
@@ -57,7 +57,7 @@ ${_3}${_4}`;
 
 function main (fname) {
     var text = getJSON(fname);
-    const { parser, cst } = inserter (text);
+    const { parser, cst } = insert (text);
     if (cst.succeeded) {
 	var semantics = parser.createSemantics ();
 	addSem (semantics);
@@ -92,5 +92,5 @@ function tokenArrayToStringArray (a) {
 
 
 var { cst, semantics } = main ("test.pl");
-var resultString = semantics (cst).inserter ();
+var resultString = semantics (cst).insert ();
 console.log (resultString);

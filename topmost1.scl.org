@@ -9,8 +9,9 @@
    prime-expander.bash
    node insert-inserter  # step 1
    node dot-expander     # step 2
+   ./pragma-remover.bash # step 3
 * comment
-  %% should expand, in 2 steps, to..
+  %% should expand, in 3 steps, to..
 
   %% pragma preamble clear
   topmost(L1,L2,L) :-
@@ -22,6 +23,13 @@
   %% pragma preamble clear
   topmost(L1,L2,L) :-
       %% pragma preamble insert
+      x(L1,L1_x),
+      x(L2,L2_x),
+      horizontal(L1),
+      horizontal(L2),
+      L1_x =< L2_x.
+  
+  topmost(L1,L2,L) :-
       x(L1,L1_x),
       x(L2,L2_x),
       horizontal(L1),
