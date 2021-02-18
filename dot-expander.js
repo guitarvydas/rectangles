@@ -1,7 +1,10 @@
 const grammar = `
 dot_expander {
-  program = (dottedIdent | anyToken)+
+  program = (colonDash | dottedIdent | anyToken)+
+  colonDash = colon dash
   dottedIdent = ident dot ident
+  colon =    "[" "character"     ws* ":"  ws* position "]" ws*
+  dash =     "[" "character"     ws* "-"  ws* position "]" ws*
   dot =      "[" "character"     ws* "."  ws* position "]" ws*
   ident =    "[" "symbol"  ws* text ws* position "]" ws*
   anyToken = "[" tokenType ws* text ws* position "]" ws*
@@ -52,6 +55,11 @@ function addSem (sem) {
 		preambles = [];
 		var result = _1s.dot();
 		return result; },  // result is an Array of {preamble:..., tokens:...}
+	    colonDash : function (_1, _2) {
+		var colonToken = _1.dot ().ref [0];
+		var dashToken = _2.dot ().ref [0];
+		return { preamble: [], ref: [ colonToken, dashToken ] };
+	    },
 	    dottedIdent  : function (_1, _2, _3) { //ident dot ident 
 		// x.y --> y(x,V) --> (prolog) preamble = y(x,V_x_y), usage = V_x_y
 
@@ -92,6 +100,14 @@ function addSem (sem) {
 	    },
 
 	    // tokens return {insert, text}
+	    colon  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //     "[" "character"     ws* ":"  ws* position "]" ws*
+		var pos = _6.dot ();
+		var t = new Token ("character", ".", pos.line, pos.offset);
+		return {preamble: [], ref: [t]}},
+	    dash  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //     "[" "character"     ws* "-"  ws* position "]" ws*
+		var pos = _6.dot ();
+		var t = new Token ("character", "-", pos.line, pos.offset);
+		return {preamble: [], ref: [t]}},
 	    dot  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //     "[" "character"     ws* "."  ws* position "]" ws*
 		var pos = _6.dot ();
 		var t = new Token ("character", ".", pos.line, pos.offset);
@@ -157,5 +173,5 @@ var { cst, semantics } = main ("-");
 var resultArray /*[{ preamble[], tokens[] }]*/ = semantics (cst).dot ();
 var preambleTokenArray = resultArray.map (x => { return x.preamble }).flat ();
 var refTokenArray = resultArray.map (x => { return x.ref }).flat ();
-console.log (tokenArrayToStringArray (preambleTokenArray));
-console.log (tokenArrayToStringArray (refTokenArray));
+process.stderr.write (tokenArrayToStringArray (preambleTokenArray));
+process.stdout.write (tokenArrayToStringArray (refTokenArray));
