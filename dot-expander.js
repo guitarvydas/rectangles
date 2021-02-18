@@ -1,6 +1,7 @@
 const grammar = `
 dot_expander {
   program = (colonDash | dottedIdent | anyToken)+
+  rule = (~":" (dottedIdent | anyToken))+ colonDash (colonDash | dottedIdent | anyToken)+
   colonDash = colon dash
   dottedIdent = ident dot ident
   colon =    "[" "character"     ws* ":"  ws* position "]" ws*
@@ -56,6 +57,7 @@ function addSem (sem) {
 		var result = _1s.dot();
 		return result; },  // result is an Array of {preamble:..., tokens:...}
 	    colonDash : function (_1, _2) {
+		process.stderr.write("@@@@@@@ colonDash @@@@@@@@\n");
 		var colonToken = _1.dot ().ref [0];
 		var dashToken = _2.dot ().ref [0];
 		return { preamble: [], ref: [ colonToken, dashToken ] };
