@@ -43,7 +43,7 @@ function Token (ty, text, line, offset) {
     this.line = line;
     this.offset = offset;
     this.toString = function () {
-	return `[${this.ty} ${this.text} ${this.line} ${this.offset}]`;
+	return `[${this.ty},${this.text},${this.line},${this.offset}]`;
     }
 }
 
@@ -185,18 +185,20 @@ function tokenArrayToStringArray (a) {
 var { cst, semantics } = main ("-");
 var resultArray /*[{ preamble[], tokens[] }]*/ = semantics (cst).dot ();
 //console.log (resultArray);
-console.log (resultArray.preamble);
-console.log (resultArray.ref);
+// console.log (resultArray.preamble);
+// console.log (resultArray.ref);
 
 var preambleTokens = resultArray.preamble.map (obj => { return obj.ref });
 var refTokens = resultArray.ref.map (obj => { return obj.ref });
-console.log (preambleTokens);
-console.log (refTokens);
+// console.log (preambleTokens);
+// console.log (refTokens);
 
 var preambles = preambleTokens.map (token => {return token.toString ();}).join ('\n');
 var refs = refTokens.map (token => { return token.toString (); }).join ('\n');
-console.log (preambles);
-console.log (refs);
+// console.log (preambles);
+// console.log (refs);
+process.stderr.write (preambles);
+process.stdout.write (refs);
 
 //process.stderr.write (tokenArrayToStringArray (preambleTokenArray));
 //process.stdout.write (tokenArrayToStringArray (refTokenArray));
