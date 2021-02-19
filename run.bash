@@ -1,10 +1,7 @@
 #!/bin/bash
 node ./insert-inserter <test.pl |\
     node ../tokens/tokenizer >_1.tokens
-#    node ./dot-expander <_1.tokens |\
-    cat _1.tokens |\
-    ../untoken/untoken.bash |\
-    ./pragma-remover.bash
+    node ./dot-expander <_1.tokens
 
 # node ./insert-inserter <test.pl |\
 #     node ../tokens/tokenizer |\

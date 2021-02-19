@@ -1,5 +1,5 @@
-% comment 1
-  topmost(L) :-
-% comment 2
+%a
+  topmost :-
+%b
       L1.x =< L1.x.
-% comment 3
+%c
