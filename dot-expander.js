@@ -1,8 +1,9 @@
 const grammar = `
 DOT_expander {
-  Head = HeadItem+
-  Program = Rule+
   Rule =  Head
+  Program = Rule+
+  HoldRule =  Head
+  Head = HeadItem+
   HeadItem = ~ColonDash AnyToken
   Body = BodyItem+
   BodyItem = ~Dot AnyToken
