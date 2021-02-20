@@ -32,11 +32,16 @@ function addSem (sem) {
 	{
 	    program: function (_1s) { return _1s.insert ().join (''); },
 	    rule: function (_01, _1, _2, _3, _4) { //Head ":-" body endRule
-		return `${_01.insert ()}
+		var s01 = _01.insert ();
+		var s1 = _1.insert ();
+		var s2 = _2.insert ();
+		var s3 = _3.insert ();
+		var s4 = _4.insert ();
+		return `${s01}
 %%pragma preamble clear
-${_1.insert ()}${_2.insert ()}
+${s1}${s2}${s3}
 %%pragma preamble insert
-${_3.insert ()}${_4.insert ()}`;
+${s4}`;
 	    },
 	    head: function (_1, _2) {return `${_1.insert ()}${_2.insert ()}`; }, //ident ParameterList*
 	    body: function (_1s) {return `${_1s.insert ().join ('')}`;}, //bodyItem+
