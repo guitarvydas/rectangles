@@ -1,0 +1,11 @@
+* src
+  x-name = y-name;
+* meta
+** name
+  silly.js
+** include
+** transpile
+   dash-expander.bash
+* comment   
+  %% should expand to...
+  x_name = y_name;

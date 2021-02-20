@@ -1,0 +1,36 @@
+* src
+** system (2 lamps)
+*** lamp1
+*** lamp2
+
+* meta
+
+manage complexity of problem
+vs. manage complexity of the solution
+gap between pure-research vs. Arch vs. Eng vs Impl
+
+state diagram
+transition between states
+FBP vs state diagram
+layers of acetates
+
+top layer: concurrency with functions for everything else
+  bash
+  process [function f (x, y, z) returns w throws v]
+2nd layer: GOTO
+  inside a component
+  while(...) { ... }
+  if ... then ... else .. fi
+  function f (x, y, z) returns w throws v
+  divide-by-zero exception
+  javascript, python, state diagrams, etc.
+3rd layer: code
+  javascript, python, etc.
+
+draw fbp-->statedia-->code-->assembler-->binary
+
+system: 2 lamps (fbp)
+each lamp (state diagram)
+state diagram transpiles -> js
+js compiles -> assembler
+assembler assembles -> binary
