@@ -1,9 +1,22 @@
 #!/bin/bash
+# node ./insert-inserter <test.pl >_0.pl
+# node ../tokens/tokenizer <_0.pl >_1.tokens
+# node ./dot-expander <_1.tokens >_2.tokens
+# ../untoken/untoken.bash <_2.tokens >_3.pl
+# ./pragma-remover.bash <_3.pl >_4.pl
+# cat _4.pl
 node ./insert-inserter <test.pl |\
     node ../tokens/tokenizer |\
-    node ./dot-expander|\
+    node ./dot-expander |\
     ../untoken/untoken.bash |\
-    ./pragma-remover.bash
+    ./pragma-remover.bash 
+
+
+# node ./insert-inserter <test.pl |\
+#     node ../tokens/tokenizer |\
+#     node ./dot-expander 
+# #    ../untoken/untoken.bash |\
+# #    ./pragma-remover.bash
 
 # node ./insert-inserter <test.pl |\
 #     node ../tokens/tokenizer |\

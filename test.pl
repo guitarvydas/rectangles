@@ -1,5 +1,4 @@
 %a
-  topmost :-
-%b
-      L1.x =< L1.x.
-%c
+h :- 
+    e.x <= f.y,
+    b.
