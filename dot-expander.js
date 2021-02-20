@@ -1,17 +1,35 @@
 const grammar = `
-dot_expander {
-  program = (dottedIdent | anyToken)+
-  dottedIdent = ident dot ident
-  dot =      "[" "character"     ws* "."  ws* position "]" ws*
-  ident =    "[" "symbol"  ws* text ws* position "]" ws*
-  anyToken = "[" tokenType ws* text ws* position "]" ws*
-  position = ws* int ws+ int
-  text = encodedChar+
-  encodedChar = ~ws ("A" .. "Z" | "a" .. "z" | "0" .. "9" | "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")" | "%")
-  int = digitChar+
-  digitChar = "0" .. "9" 
-  tokenType = encodedChar+
-  ws = " " | "\\n" | "\\t"
+DOT_expander {
+  Program = Rule+
+  Rule =  Head ColonDash Body Dot WS*
+  Head = HeadItem+
+  HeadItem = ~ColonDash AnyToken
+  Body = BodyItem+
+  BodyItem = DottedIdent | (~Dot ~DotIdent AnyToken)
+  ColonDash = Colon Dash
+  DotIdent = Dot Ident
+  DottedIdent = Ident Dot Ident
+  Colon =    "[" "character" FS     "%3A" FS Position "]" 
+  Dash =     "[" "character" FS     "-"   FS Position "]" 
+  Dot =      "[" "character" FS     "."   FS Position "]" 
+  Ident =    "[" "symbol" FS        Text  FS Position "]" 
+  Whitespace = "[" "whitespace" FS  Text  FS Position "]" 
+  Newline =  "[" "character" FS     "%0A" FS Position "]" 
+  Comma =    "[" "character" FS     "%2C" FS Position "]" 
+  Comment =  "[" "comment"   FS     Text  FS Position "]" 
+  Pragma =   "[" "pragma"    FS     Text  FS Position "]" 
+  GenericToken = "[" TokenType   FS     Text  FS Position "]" 
+
+  AnyToken = Pragma | GenericToken
+  WS = Pragma | Comment | Whitespace | Newline | Comma
+
+  Position = Int FS Int
+  Text = EncodedChar+
+  EncodedChar = ("A" .. "Z" | "a" .. "z" | "0" .. "9" | "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")" | "%")
+  Int = DigitChar+
+  DigitChar = "0" .. "9" 
+  TokenType = EncodedChar+
+  FS = ","+
 }
 `;
 
@@ -35,7 +53,7 @@ function Token (ty, text, line, offset) {
     this.line = line;
     this.offset = offset;
     this.toString = function () {
-	return `[${this.ty} ${this.text} ${this.line} ${this.offset}]`;
+        return `[${this.ty},${this.text},${this.line},${this.offset}]`;
     }
 }
 
@@ -44,88 +62,185 @@ function Position (line, offset) {
     this.offset = offset;
 }
 
+// preamble object
+function Preamble () {
+    process.stderr.write ("CREATING preamble");
+    process.stderr.write ("\n");
+    this.symbolHash = [];
+    this.value = [];
+    this.add = function (token) { 
+        process.stderr.write ("ADDING preamble");
+        process.stderr.write ("\n");
+        this.value.push (token); 
+    },
+    this.addSeen = function (name) {
+        if (this.seen (name)) {
+            throw "can't happen";
+        };
+        this.symbolHash [name] = true;
+    };
+    this.seen = function (name) {
+        return this.symbolHash [name];
+    };
+}
+
+var pre;
+
 function addSem (sem) {
     sem.addOperation (
-	"dot",
-	{
-	    program  : function (_1s) {  //(dottedIdent | anyToken)+
-		preambles = [];
-		var result = _1s.dot();
-		return result; },  // result is an Array of {preamble:..., tokens:...}
-	    dottedIdent  : function (_1, _2, _3) { //ident dot ident 
-		// x.y --> y(x,V) --> (prolog) preamble = y(x,V_x_y), usage = V_x_y
-
-		// _1 is [preamble: [], ref: [ [symbol x lll ooo] ]
-		// _2 is [preamble: [], ref: [ [character . xxx xxx] ]
-		// _3 is [preamble: [], ref: [ [symbol y xxx xxx] ]
-
-		// newSymbol: Field_x_y
-		// originalSymbol: x
-		// originalField: y
-		// preamble: y(x,Field_x_y) --> originalField "(" originalSymbol "," newSymbol ")" 
-		// ref: [ Field_x_y ] --> [ [symbol Field_x_y lll ooo] ]
-
-		var originalSymbol = _1.dot ().ref[0];
-		var originalField = _3.dot ().ref[0];
-		var sym = originalSymbol.text;
-		var field = originalField.text;
-		var line = originalField.line;
-		var offset = originalSymbol.offset;
-		var newSymName = `Field_${sym}_${field}`;
-		var newSymbol = new Token ("symbol", newSymName, line, offset);
-		var ref = [ newSymbol ];
-		var preamble;
-		if (preambles[newSymName]) {
-		    preamble = [];
-		} else {
-		    preambles[newSymName] = true;
-		    preamble = [
-			originalField,
-			new Token ("character", "(", line, offset),
-			originalSymbol,
-			new Token ("character", ",", line, offset),
-			newSymbol,
-			new Token ("character", ")", line, offset)
-		    ];
-		};
-		return { preamble: preamble, ref: ref };
+        "dot",
+        // every rule returns an array of tokens and might add tokens to
+        // the top of preambles stack
+        // we emit the stack of preambles after we see ":-"
+        {
+            Program  : function (_1s) { // return array of tokens
+                var result = _1s.dot ();
+                return result.flat ();
+            },
+            Rule: function (_1, _2, _3, _4, _5s) { // return array of tokens
+                var head = _1.dot ();
+                var ce = _2.dot ();
+                var body = _3.dot ()
+                var dot = _4.dot ();
+                var ws = _5s.dot ().flat ();
+                return head.concat (ce).concat (body).concat (dot).concat (ws);
+            },
+            Head: function (_1s) { return _1s.dot (); },                
+            HeadItem: function (_1) { return _1.dot (); },
+            Body: function (_1s) { 
+		return _1s.dot ().flat (); // tokens return single token, except pragma which might return an array of tokens
 	    },
+            BodyItem: function (_1) { return _1.dot (); },
+            
+            ColonDash : function (_1, _2) {
+                var colonToken = (_1.dot ()) [0];
+                var dashToken = (_2.dot ()) [0];
+                return [ colonToken, dashToken ] ;
+            },
+            DottedIdent  : function (_1, _2, _3) { //ident dot ident
+                // x.y --> y(x,V) --> (prolog) preamble = y(x,V_x_y), usage = V_x_y
 
-	    // tokens return {insert, text}
-	    dot  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //     "[" "character"     ws* "."  ws* position "]" ws*
-		var pos = _6.dot ();
-		var t = new Token ("character", ".", pos.line, pos.offset);
-		return {preamble: [], ref: [t]}},
-	    ident  : function (_1, _2, _3, _4, _5, _6, _7, _8) {  //   "[" "symbol"  ws* text ws* position "]" ws*
-		var pos = _6.dot ();
-		var t = new Token ("symbol", _4.dot (), pos.line, pos.offset);
-		return {preamble: [], ref: [t]}},
-	    anyToken  : function (_1, _2, _3, _4, _5, _6, _7, _8) { //"[" tokenType ws* text ws* position "]" ws*
-		var pos = _6.dot ();
-		var t = new Token (_2.dot (), _4.dot (), pos.line, pos.offset);
-		return {preamble: [], ref: [t]}},
+                // _1 is [ [symbol x lll ooo] ]
+                // _2 is [ [character . xxx xxx] ]
+                // _3 is [ [symbol y xxx xxx] ]
 
-	    position  : function (_1s, _2, _3s, _4) { return new Position (_2.dot (), _4.dot ()); }, //ws* int ws+ int
-	    text  : function (_1s) { return _1s.dot ().join(''); }, //encodedChar+
-	    encodedChar  : function (_1) { return _1.dot (); }, //~ws ("A" .. "Z" | "a" .. "z" | "0" .. "9" | "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")" | "%")
-	    int  : function (_1s) { return _1s.dot ().join (''); }, //digitChar+
-	    digitChar  : function (_1) { return _1.dot (); }, //"0" .. "9" 
-	    tokenType  : function (_1s) { return _1s.dot ().join (''); }, //encodedChar+
-	    ws  : function (_1) { return _1.dot (); }, //" " | "\\n" | "\\t"
-	    _terminal: function () { return this.primitiveValue; }
-	}
+                // newSymbol: Field_x_y
+                // originalSymbol: x
+                // originalField: y
+                // preamble: y(x,Field_x_y) --> originalField "(" originalSymbol "," newSymbol ")" 
+                // code: [ Field_x_y ] --> [ [symbol Field_x_y lll ooo] ]
+
+                var originalSymbol = (_1.dot ())[0];
+                var originalField = (_3.dot ())[0];
+                var sym = originalSymbol.text;
+                var field = originalField.text;
+                var line = originalField.line;
+                var offset = originalSymbol.offset;
+                var newSymbolName = `Field_${sym}_${field}`;
+                var newSymbolToken = new Token ("symbol", newSymbolName, line, offset);
+                if (! pre.seen ( newSymbolName )) {
+                    pre.addSeen (newSymbolName);
+                    var comma = new Token ("character", "%2C", line, offset);
+                    var newline = new Token ("character", "%0A", line, offset);
+                    pre.add (comma);
+                    pre.add (originalField);
+                    pre.add (new Token ("character", "(", line, offset));
+                    pre.add (originalSymbol);
+                    pre.add (comma);
+                    pre.add (newSymbolToken);
+                    pre.add (new Token ("character", ")", line, offset));
+                };
+                return [ newSymbolToken ];
+            },
+
+            // tokens return {insert, text}
+            Colon  : function (_1, _2, _3, _4, _5, _6, _7) {
+                var pos = _6.dot ();
+                var t = new Token ("character", ":", pos.line, pos.offset);
+                return [t];},
+            Dash  : function (_1, _2, _3, _4, _5, _6, _7) {
+                var pos = _6.dot ();
+                var t = new Token ("character", "-", pos.line, pos.offset);
+                return [t];},
+            Dot  : function (_1, _2, _3, _4, _5, _6, _7) {
+                var pos = _6.dot ();
+                var t = new Token ("character", ".", pos.line, pos.offset);
+                return [t];},
+            Ident  : function (_1, _2, _3, _4, _5, _6, _7) {
+                var pos = _6.dot ();
+                var t = new Token ("symbol", _4.dot (), pos.line, pos.offset);
+                return [t];},
+            GenericToken  : function (_1, _2, _3, _4, _5, _6, _7) {
+                var pos = _6.dot ();
+                var t = new Token (_2.dot (), _4.dot (), pos.line, pos.offset);
+                return [t];},
+            Whitespace  : function (_1, _2, _3, _4, _5, _6, _7) {
+                var pos = _6.dot ();
+                var t = new Token (_2.dot (), _4.dot (), pos.line, pos.offset);
+                return [t];},
+            Comment: function (_1, _2, _3, _4, _5, _6, _7) {
+                var pos = _6.dot ();
+                var t = new Token (_2.dot (), _4.dot (), pos.line, pos.offset);
+                return [t];},
+            Comma: function (_1, _2, _3, _4, _5, _6, _7) {
+                var pos = _6.dot ();
+                var t = new Token (_2.dot (), _4.dot (), pos.line, pos.offset);
+                return [t];},
+            Pragma: function (_1, _2, _3, _4, _5, _6, _7) {
+                var command = decodeURIComponent (_4.dot ());
+                var pos = _6.dot ();
+                var generated;
+                const re_clear = /preamble.clear/;
+                const re_insert = /preamble.insert/;
+                if (command.match(re_clear)) {
+                    process.stderr.write ("PRAGMA clear");
+                    process.stderr.write ("\n");
+                    pre = new Preamble ();
+                    var generated = [ new Token (_2.dot (), _4.dot (), pos.line, pos.offset) ];
+                } else if (command.match(re_insert)) {
+                    process.stderr.write ("PRAGMA insert");
+                    process.stderr.write ("\n");
+                    var t = new Token (_2.dot (), _4.dot (), pos.line, pos.offset);
+                    generated = pre.value;
+                };
+                console.log ("PRAGMA result");
+                return generated;
+            },
+            Newline  : function (_1, _2, _3, _4, _5, _6, _7) {
+                var pos = _6.dot ();
+                var t = new Token (_2.dot (), _4.dot (), pos.line, pos.offset);
+                return [t];},
+
+            AnyToken: function (_1) {
+                return _1.dot ();
+            },
+            WS: function (_1) {
+                return _1.dot ();
+            },
+
+            Position  : function (_1, _2, _3) { return new Position (_1.dot (), _3.dot ()); },
+            Text  : function (_1s) { return _1s.dot ().join(''); },
+            EncodedChar  : function (_1) { return _1.dot (); },
+            Int  : function (_1s) { return _1s.dot ().join (''); },
+            DigitChar  : function (_1) { return _1.dot (); },
+            TokenType  : function (_1s) { return _1s.dot ().join (''); },
+            FS: function (_1s) { return _1s.dot ().join (''); },
+            _terminal: function () { return this.primitiveValue; }
+        }
     );
 }
 
-function main (fname) {
-    var text = getJSON(fname);
+function main () {
+    var argv = process.argv.slice (1);
+    fname = argv [1];
+    var text = getNamedFile(fname);
     const { parser, cst } = expand (text);
     if (cst.succeeded) {
-	var semantics = parser.createSemantics ();
-	addSem (semantics);
-	return { cst: cst, semantics: semantics };
+        var semantics = parser.createSemantics ();
+        addSem (semantics);
+        return { cst: cst, semantics: semantics };
     } else {
-	throw "didn't parse";
+        throw "didn't parse";
     }
 }
 
@@ -141,21 +256,13 @@ function getNamedFile (fname) {
     }   
 }
 
-function getJSON (fname) {
-    var s = getNamedFile (fname);
-    return s;
-    return (JSON.parse (s));
-}
-
 function tokenArrayToStringArray (a) {
     var sArray = a.map (token => { return token.toString (); });
     return sArray.join ('\n');
 }
 
 
-var { cst, semantics } = main ("-");
-var resultArray /*[{ preamble[], tokens[] }]*/ = semantics (cst).dot ();
-var preambleTokenArray = resultArray.map (x => { return x.preamble }).flat ();
-var refTokenArray = resultArray.map (x => { return x.ref }).flat ();
-console.log (tokenArrayToStringArray (preambleTokenArray));
-console.log (tokenArrayToStringArray (refTokenArray));
+var { cst, semantics } = main ();
+var resultArray = semantics (cst).dot ();
+var stringArray= resultArray.map (token => {return token.toString ();});
+stringArray.forEach (s => console.log (s));
